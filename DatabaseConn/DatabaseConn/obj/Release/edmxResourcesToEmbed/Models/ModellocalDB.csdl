@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="InventoryModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+  <EntityType Name="Item">
+    <Key>
+      <PropertyRef Name="serial_number" />
+    </Key>
+    <Property Name="UPC" Type="String" MaxLength="20" FixedLength="true" Unicode="true" Nullable="false" />
+    <Property Name="serial_number" Type="String" MaxLength="30" FixedLength="true" Unicode="true" Nullable="false" />
+    <Property Name="model_number" Type="String" MaxLength="30" FixedLength="true" Unicode="true" />
+    <Property Name="manufacturer" Type="String" MaxLength="30" FixedLength="true" Unicode="true" />
+    <Property Name="building_ID" Type="String" MaxLength="10" FixedLength="true" Unicode="true" />
+    <Property Name="surplus_date" Type="DateTime" Precision="0" />
+    <Property Name="received_date" Type="DateTime" Precision="0" />
+    <Property Name="description" Type="String" MaxLength="40" FixedLength="true" Unicode="true" />
+    <Property Name="PO_number" Type="Int32" />
+    <Property Name="checked_out" Type="DateTime" Precision="0" />
+    <Property Name="checked_in" Type="DateTime" Precision="0" />
+    <Property Name="person_ID" Type="Int32" />
+    <Property Name="decal" Type="String" MaxLength="10" FixedLength="true" Unicode="true" />
+  </EntityType>
+  <EntityType Name="PO">
+    <Key>
+      <PropertyRef Name="PO_number" />
+    </Key>
+    <Property Name="PO_number" Type="Int32" Nullable="false" />
+    <Property Name="vendor" Type="String" MaxLength="20" FixedLength="true" Unicode="true" />
+  </EntityType>
+  <EntityType Name="Category">
+    <Key>
+      <PropertyRef Name="UPC" />
+      <PropertyRef Name="type" />
+    </Key>
+    <Property Name="UPC" Type="String" MaxLength="20" FixedLength="true" Unicode="true" Nullable="false" />
+    <Property Name="type" Type="String" MaxLength="20" FixedLength="true" Unicode="true" Nullable="false" />
+  </EntityType>
+  <EntityType Name="Disposable">
+    <Key>
+      <PropertyRef Name="UPC" />
+      <PropertyRef Name="quantity" />
+    </Key>
+    <Property Name="UPC" Type="String" MaxLength="20" FixedLength="true" Unicode="true" Nullable="false" />
+    <Property Name="quantity" Type="Int32" Nullable="false" />
+    <Property Name="description" Type="String" MaxLength="40" FixedLength="true" Unicode="true" />
+  </EntityType>
+  <EntityContainer Name="InventoryEntities" annotation:LazyLoadingEnabled="true">
+    <EntitySet Name="Items" EntityType="Self.Item" />
+    <EntitySet Name="POes" EntityType="Self.PO" />
+    <EntitySet Name="Categories" EntityType="Self.Category" />
+    <EntitySet Name="Disposables" EntityType="Self.Disposable" />
+  </EntityContainer>
+</Schema>

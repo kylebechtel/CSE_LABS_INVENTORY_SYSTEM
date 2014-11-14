@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="InventoryModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+  <!--Errors Found During Generation:
+warning 6002: The table/view 'Inventory.dbo.Category' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+  <EntityType Name="Category">
+    <Key>
+      <PropertyRef Name="UPC" />
+      <PropertyRef Name="type" />
+    </Key>
+    <Property Name="UPC" Type="nchar" MaxLength="20" Nullable="false" />
+    <Property Name="type" Type="nchar" MaxLength="20" Nullable="false" />
+  </EntityType>
+  <!--Errors Found During Generation:
+warning 6002: The table/view 'Inventory.dbo.Disposable' does not have a primary key defined. The key has been inferred and the definition was created as a read-only table/view.-->
+  <EntityType Name="Disposable">
+    <Key>
+      <PropertyRef Name="UPC" />
+      <PropertyRef Name="quantity" />
+    </Key>
+    <Property Name="UPC" Type="nchar" MaxLength="20" Nullable="false" />
+    <Property Name="quantity" Type="int" Nullable="false" />
+    <Property Name="description" Type="nchar" MaxLength="40" />
+  </EntityType>
+  <EntityType Name="Item">
+    <Key>
+      <PropertyRef Name="serial_number" />
+    </Key>
+    <Property Name="UPC" Type="nchar" MaxLength="20" Nullable="false" />
+    <Property Name="serial_number" Type="nchar" MaxLength="30" Nullable="false" />
+    <Property Name="model_number" Type="nchar" MaxLength="30" />
+    <Property Name="manufacturer" Type="nchar" MaxLength="30" />
+    <Property Name="building_ID" Type="nchar" MaxLength="10" />
+    <Property Name="surplus_date" Type="date" />
+    <Property Name="received_date" Type="date" />
+    <Property Name="description" Type="nchar" MaxLength="40" />
+    <Property Name="PO_number" Type="int" />
+    <Property Name="checked_out" Type="date" />
+    <Property Name="checked_in" Type="date" />
+    <Property Name="person_ID" Type="int" />
+    <Property Name="decal" Type="nchar" MaxLength="10" />
+  </EntityType>
+  <!--Errors Found During Generation:
+warning 6013: The table/view 'Inventory.dbo.Person' does not have a primary key defined and no valid primary key could be inferred. This table/view has been excluded. To use the entity, you will need to review your schema, add the correct keys, and uncomment it.
+        <EntityType Name="Person">
+          <Property Name="person_ID" Type="int" />
+          <Property Name="name" Type="nchar" MaxLength="30" />
+        </EntityType>-->
+  <EntityType Name="PO">
+    <Key>
+      <PropertyRef Name="PO_number" />
+    </Key>
+    <Property Name="PO_number" Type="int" Nullable="false" />
+    <Property Name="vendor" Type="nchar" MaxLength="20" />
+  </EntityType>
+  <EntityContainer Name="InventoryModelStoreContainer">
+    <EntitySet Name="Item" EntityType="Self.Item" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="PO" EntityType="Self.PO" Schema="dbo" store:Type="Tables" />
+    <EntitySet Name="Category" EntityType="Self.Category" store:Type="Tables" store:Schema="dbo">
+      <DefiningQuery>SELECT 
+    [Category].[UPC] AS [UPC], 
+    [Category].[type] AS [type]
+    FROM [dbo].[Category] AS [Category]</DefiningQuery>
+    </EntitySet>
+    <EntitySet Name="Disposable" EntityType="Self.Disposable" store:Type="Tables" store:Schema="dbo">
+      <DefiningQuery>SELECT 
+    [Disposable].[UPC] AS [UPC], 
+    [Disposable].[quantity] AS [quantity], 
+    [Disposable].[description] AS [description]
+    FROM [dbo].[Disposable] AS [Disposable]</DefiningQuery>
+    </EntitySet>
+  </EntityContainer>
+</Schema>

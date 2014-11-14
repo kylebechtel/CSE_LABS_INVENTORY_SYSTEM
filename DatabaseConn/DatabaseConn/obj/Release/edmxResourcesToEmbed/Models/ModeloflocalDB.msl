@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+  <EntityContainerMapping StorageEntityContainer="InventoryModelStoreContainer" CdmEntityContainer="Entities">
+    <EntitySetMapping Name="Items">
+      <EntityTypeMapping TypeName="InventoryModel.Item">
+        <MappingFragment StoreEntitySet="Item">
+          <ScalarProperty Name="UPC" ColumnName="UPC" />
+          <ScalarProperty Name="serial_number" ColumnName="serial_number" />
+          <ScalarProperty Name="model_number" ColumnName="model_number" />
+          <ScalarProperty Name="manufacturer" ColumnName="manufacturer" />
+          <ScalarProperty Name="building_ID" ColumnName="building_ID" />
+          <ScalarProperty Name="surplus_date" ColumnName="surplus_date" />
+          <ScalarProperty Name="received_date" ColumnName="received_date" />
+          <ScalarProperty Name="description" ColumnName="description" />
+          <ScalarProperty Name="PO_number" ColumnName="PO_number" />
+          <ScalarProperty Name="checked_out" ColumnName="checked_out" />
+          <ScalarProperty Name="checked_in" ColumnName="checked_in" />
+          <ScalarProperty Name="person_ID" ColumnName="person_ID" />
+          <ScalarProperty Name="decal" ColumnName="decal" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="POes">
+      <EntityTypeMapping TypeName="InventoryModel.PO">
+        <MappingFragment StoreEntitySet="PO">
+          <ScalarProperty Name="PO_number" ColumnName="PO_number" />
+          <ScalarProperty Name="vendor" ColumnName="vendor" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="Categories">
+      <EntityTypeMapping TypeName="InventoryModel.Category">
+        <MappingFragment StoreEntitySet="Category">
+          <ScalarProperty Name="UPC" ColumnName="UPC" />
+          <ScalarProperty Name="type" ColumnName="type" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="Disposables">
+      <EntityTypeMapping TypeName="InventoryModel.Disposable">
+        <MappingFragment StoreEntitySet="Disposable">
+          <ScalarProperty Name="UPC" ColumnName="UPC" />
+          <ScalarProperty Name="quantity" ColumnName="quantity" />
+          <ScalarProperty Name="description" ColumnName="description" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+  </EntityContainerMapping>
+</Mapping>
