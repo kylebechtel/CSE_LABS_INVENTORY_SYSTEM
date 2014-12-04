@@ -163,7 +163,6 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
     <Compile Include="Controllers\HomeController.cs" />
-    <Compile Include="Controllers\LookupController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -268,13 +267,26 @@
     <Content Include="Views\App\viewDisposable.cshtml" />
     <Content Include="Views\App\checkOut.cshtml" />
     <Content Include="Views\App\checkIn.cshtml" />
+    <Content Include="Views\Home\About.cshtml" />
+    <Content Include="Views\Home\addDisposable.cshtml" />
+    <Content Include="Views\Home\addItem.cshtml" />
+    <Content Include="Views\Home\checkIn.cshtml" />
+    <Content Include="Views\Home\checkOut.cshtml" />
+    <Content Include="Views\Home\Contact.cshtml" />
+    <Content Include="Views\Home\getItemUpc.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Home\removeDisposable.cshtml" />
+    <Content Include="Views\Home\removeItem.cshtml" />
+    <Content Include="Views\Home\viewDisposable.cshtml" />
+    <Content Include="Views\Home\viewItem.cshtml" />
+    <Content Include="Views\Home\viewPerson.cshtml" />
+    <Content Include="Views\Home\viewPO.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
     <Folder Include="Views\AccountViewModels\" />
     <Folder Include="Views\IdentityConfig\" />
     <Folder Include="Views\IdentityModels\" />
-    <Folder Include="Views\Lookup\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="fonts\glyphicons-halflings-regular.woff" />

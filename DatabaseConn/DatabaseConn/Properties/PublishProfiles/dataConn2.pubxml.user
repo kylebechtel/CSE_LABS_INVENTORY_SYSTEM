@@ -13,13 +13,13 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>10/20/2014 17:27:22</publishTime>
     </File>
     <File Include="bin/App_global.asax.compiled">
-      <publishTime>11/10/2014 14:47:01</publishTime>
+      <publishTime>11/30/2014 22:22:25</publishTime>
     </File>
     <File Include="bin/App_global.asax.dll">
-      <publishTime>11/10/2014 14:47:01</publishTime>
+      <publishTime>11/30/2014 22:22:25</publishTime>
     </File>
     <File Include="bin/DatabaseConn.dll">
-      <publishTime>11/10/2014 14:46:58</publishTime>
+      <publishTime>11/30/2014 22:22:14</publishTime>
     </File>
     <File Include="bin/EntityFramework.dll">
       <publishTime>11/09/2014 19:48:13</publishTime>
@@ -133,7 +133,7 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>11/09/2014 19:48:15</publishTime>
     </File>
     <File Include="PrecompiledApp.config">
-      <publishTime>11/10/2014 14:46:59</publishTime>
+      <publishTime>11/30/2014 22:22:23</publishTime>
     </File>
     <File Include="Scripts/bootstrap.js">
       <publishTime>10/20/2014 17:27:09</publishTime>
@@ -216,6 +216,45 @@ by editing this MSBuild file. In order to learn more about this please visit htt
     <File Include="Views/Account/_SetPasswordPartial.cshtml">
       <publishTime>10/20/2014 17:27:26</publishTime>
     </File>
+    <File Include="Views/App/About.cshtml">
+      <publishTime>11/09/2014 18:59:24</publishTime>
+    </File>
+    <File Include="Views/App/addDisposable.cshtml">
+      <publishTime>11/09/2014 18:59:21</publishTime>
+    </File>
+    <File Include="Views/App/addItem.cshtml">
+      <publishTime>11/09/2014 18:59:18</publishTime>
+    </File>
+    <File Include="Views/App/checkIn.cshtml">
+      <publishTime>11/09/2014 19:26:37</publishTime>
+    </File>
+    <File Include="Views/App/checkOut.cshtml">
+      <publishTime>11/09/2014 19:53:41</publishTime>
+    </File>
+    <File Include="Views/App/Contact.cshtml">
+      <publishTime>10/20/2014 17:26:57</publishTime>
+    </File>
+    <File Include="Views/App/getItemUPC.cshtml">
+      <publishTime>10/23/2014 16:42:23</publishTime>
+    </File>
+    <File Include="Views/App/Index.cshtml">
+      <publishTime>11/09/2014 18:57:38</publishTime>
+    </File>
+    <File Include="Views/App/removeDisposable.cshtml">
+      <publishTime>10/27/2014 21:37:44</publishTime>
+    </File>
+    <File Include="Views/App/removeItem.cshtml">
+      <publishTime>10/23/2014 18:23:32</publishTime>
+    </File>
+    <File Include="Views/App/viewDisposable.cshtml">
+      <publishTime>11/10/2014 14:45:20</publishTime>
+    </File>
+    <File Include="Views/App/viewItem.cshtml">
+      <publishTime>11/05/2014 18:27:41</publishTime>
+    </File>
+    <File Include="Views/App/viewPerson.cshtml">
+      <publishTime>11/05/2014 20:02:16</publishTime>
+    </File>
     <File Include="Views/Default/DefaultView.cshtml">
       <publishTime>10/20/2014 18:59:21</publishTime>
     </File>
@@ -223,16 +262,16 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>11/09/2014 18:59:24</publishTime>
     </File>
     <File Include="Views/Home/addDisposable.cshtml">
-      <publishTime>11/09/2014 18:59:21</publishTime>
+      <publishTime>11/30/2014 18:24:21</publishTime>
     </File>
     <File Include="Views/Home/addItem.cshtml">
-      <publishTime>11/09/2014 18:59:18</publishTime>
+      <publishTime>11/30/2014 16:48:49</publishTime>
     </File>
     <File Include="Views/Home/checkIn.cshtml">
-      <publishTime>11/09/2014 19:26:37</publishTime>
+      <publishTime>11/30/2014 21:21:22</publishTime>
     </File>
     <File Include="Views/Home/checkOut.cshtml">
-      <publishTime>11/09/2014 19:53:41</publishTime>
+      <publishTime>11/30/2014 20:28:28</publishTime>
     </File>
     <File Include="Views/Home/Contact.cshtml">
       <publishTime>10/20/2014 17:26:57</publishTime>
@@ -247,19 +286,22 @@ by editing this MSBuild file. In order to learn more about this please visit htt
       <publishTime>10/23/2014 18:23:32</publishTime>
     </File>
     <File Include="Views/Home/removeDisposable.cshtml">
-      <publishTime>10/27/2014 21:37:44</publishTime>
+      <publishTime>11/30/2014 19:10:47</publishTime>
     </File>
     <File Include="Views/Home/removeItem.cshtml">
-      <publishTime>10/23/2014 18:23:32</publishTime>
+      <publishTime>11/30/2014 21:28:33</publishTime>
     </File>
     <File Include="Views/Home/viewDisposable.cshtml">
-      <publishTime>11/10/2014 14:45:20</publishTime>
+      <publishTime>11/30/2014 21:26:25</publishTime>
     </File>
     <File Include="Views/Home/viewItem.cshtml">
-      <publishTime>11/05/2014 18:27:41</publishTime>
+      <publishTime>11/30/2014 21:27:31</publishTime>
     </File>
     <File Include="Views/Home/viewPerson.cshtml">
-      <publishTime>11/05/2014 20:02:16</publishTime>
+      <publishTime>11/30/2014 21:28:53</publishTime>
+    </File>
+    <File Include="Views/Home/viewPO.cshtml">
+      <publishTime>11/30/2014 22:09:49</publishTime>
     </File>
     <File Include="Views/Items/Create.cshtml">
       <publishTime>11/09/2014 20:50:36</publishTime>

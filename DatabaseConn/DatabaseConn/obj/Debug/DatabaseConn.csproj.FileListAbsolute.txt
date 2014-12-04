@@ -52,3 +52,4 @@ c:\users\kbechel\documents\visual studio 2013\Projects\DatabaseConn\DatabaseConn
 c:\users\kbechel\documents\visual studio 2013\Projects\DatabaseConn\DatabaseConn\bin\Microsoft.Owin.Security.MicrosoftAccount.xml
 c:\users\kbechel\documents\visual studio 2013\Projects\DatabaseConn\DatabaseConn\obj\Debug\DatabaseConn.dll
 c:\users\kbechel\documents\visual studio 2013\Projects\DatabaseConn\DatabaseConn\obj\Debug\DatabaseConn.pdb
+C:\Users\kbechel\documents\visual studio 2013\Projects\DatabaseConn\DatabaseConn\obj\Debug\DatabaseConn.csprojResolveAssemblyReference.cache

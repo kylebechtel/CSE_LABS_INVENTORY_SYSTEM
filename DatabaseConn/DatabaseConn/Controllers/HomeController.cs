@@ -27,7 +27,7 @@ namespace DatabaseConn.Controllers
             string itemsUsed = Request.Form["quantity"];    // How much to remove
             string UPC = Request.Form["UPC"];
 
-            if (all != null)    // If anything was put here, it will do this.
+            if (!String.IsNullOrEmpty(all))    // If anything was put here, it will do this.
             {
                 String res = query("Delete from [Inventory].[dbo].[Disposable] where UPC = '" + UPC + "';"); // Will remove all of an Item from the DB
                 if (String.IsNullOrEmpty(res))
@@ -39,7 +39,7 @@ namespace DatabaseConn.Controllers
 
             // If the user did not specify the remove all flag, then that means only some need to be removed.
             // Check to make sure that this item does exist in the database.
-            String quantityCheck = query("SELECT quantity from [Inventory].[dbo].[Disposable] where upc = '"+UPC+"';");
+            String quantityCheck = query("SELECT quantity from [Inventory].[dbo].[Disposable] where upc = '" + UPC + "';");
             if (String.IsNullOrEmpty(quantityCheck))    // If the itme is not in the database
             {
                 ViewBag.message = "False:removeDisposable:NoSuchItem";
@@ -48,20 +48,22 @@ namespace DatabaseConn.Controllers
             int decrement = 0, currentQuantity = 0;
             try                                         // Tries to parse the numbers to update quantiy
             {
+                string[] temp = quantityCheck.Split('|');
+                quantityCheck = temp[0];
                 currentQuantity = Int32.Parse(quantityCheck);       // Number of items that are in the database currently
                 decrement = Int32.Parse(itemsUsed);                 // Number of items that you are removing
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                ViewBag.message = "False:removeDisposable:InvalidQuantity:PraseError";   // Error indicating parsing failed.
+                ViewBag.message = "False:removeDisposable:InvalidQuantity:ParseError";   // Error indicating parsing failed.
                 return View();
             }
 
             if (decrement < currentQuantity)            // If you are removing less than the total items (IE Items will remain in DB)
             {
-                string ret = query("Update [Inventory].[dbo].[Disposable] set quantity = " + (currentQuantity - decrement) + 
+                string ret = query("Update [Inventory].[dbo].[Disposable] set quantity = " + (currentQuantity - decrement) +
                     " WHERE UPC = '" + UPC + "';");     // Update the qunatity to reflect the difference
-                if (!String.IsNullOrEmpty(ret))
+                if (ret.Contains("False:"))
                     ViewBag.messaage = "False:removeDisposable:UpdatePath";
                 else
                     ViewBag.message = "True:removeDisposable:Removed" + decrement + "Items";
@@ -69,7 +71,7 @@ namespace DatabaseConn.Controllers
             else                                        // If the Quantity is greater than number in database, remove item from DB
             {
                 string ret = query("Delete from [Inventory].[dbo].[Disposable] where UPC = '" + UPC + "';");    // Deletes Item
-                if (String.IsNullOrEmpty(ret))
+                if (ret.Contains("False:"))
                     ViewBag.message = "False:removeDisposable:DeletePath";
                 else
                     ViewBag.message = "True:removeDisposable:RemovedRemainingDisposable";
@@ -84,17 +86,17 @@ namespace DatabaseConn.Controllers
 
             // Makes sure that the Item you wish to view is in the database
             string existance = query("SELECT UPC,quantity,description FROM [Inventory].[dbo].[Disposable] WHERE UPC = '" + UPC + "';");
-  
+
             if (String.IsNullOrEmpty(existance))        // Handles if the Item was not found
             {
-                    ViewBag.message = "False:viewDisposable:itemNotFound";
-                    return View();
+                ViewBag.message = "False:viewDisposable:itemNotFound";
+                return View();
             }
 
             String[] parts = existance.Split('|');
 
             // Returned Data in JSON format.
-            ViewBag.message = "UPC:" + parts[0].Trim() + ",Description:" + parts[2].Trim() + ",Quantity:"+parts[1].Trim();
+            ViewBag.message = "UPC:" + parts[0].Trim() + ",Description:" + parts[2].Trim() + ",Quantity:" + parts[1].Trim();
 
             return View();
         }
@@ -105,22 +107,32 @@ namespace DatabaseConn.Controllers
             // Post Requests
             string UPC = Request.Form["UPC"];
             string ammount = Request.Form["quantity"];
-            string description = Request.Form["description"]; 
+            string description = Request.Form["description"];
+            string PON = Request.Form["PO_number"];
+            string vend = Request.Form["vendor"];
 
-            if(String.IsNullOrEmpty(UPC))               // Makes sure a UPC was specified
+            if (String.IsNullOrEmpty(UPC))               // Makes sure a UPC was specified
             {
                 ViewBag.message = "False:addDisposable:noUPCGiven";
                 return View();
             }
-
+            if (String.IsNullOrEmpty(ammount))
+            {
+                ViewBag.message = "False:addDisposable:noAmountGiven";
+                return View();
+            }
             // Checks if UPC is already in DB
-            String existanceCheck = query("Select Quantity from [inventory].[dbo].[Disposable] where UPC = " + UPC+";");
-
+            String existanceCheck = query("Select Quantity from [inventory].[dbo].[Disposable] where UPC = '" + UPC + "';");
+            if (existanceCheck.Contains("False:"))
+            {
+                ViewBag.message = "False:addDisposable:BadUPCGiven";
+                return View();
+            }
             // If so, it updates the DB by adding that many itmes, instead of adding a new instance of it
             // By updating quantity, it keeps the database more consistent
             if (String.IsNullOrEmpty(existanceCheck))
             {
-                string res = query("Insert into [inventory].[dbo].[Disposable] (UPC,quantity, description) values(" + UPC + "," + ammount + ",'" + description + "');");
+                string res = query("Insert into [inventory].[dbo].[Disposable] (UPC,quantity, description) values('" + UPC + "'," + ammount + ",'" + description + "');");
                 ViewBag.message = "True:addDisposable:AddedNewDisposable";
             }
             else
@@ -128,20 +140,20 @@ namespace DatabaseConn.Controllers
                 int quantity = 0;
                 try
                 {
-                    string []parts = existanceCheck.Split('|'); // Removes the | from the end of the Query Return
+                    string[] parts = existanceCheck.Split('|'); // Removes the | from the end of the Query Return
                     existanceCheck = parts[0];                  // Grabs just the qunatity from the return
 
                     quantity = Int32.Parse(existanceCheck) + Int32.Parse(ammount);      // Finds the Updated Quantity
-                    if(Int32.Parse(ammount) < 0)                                        // If that Quantity is negative
+                    if (Int32.Parse(ammount) < 0)                                        // If that Quantity is negative
                     {
                         ViewBag.message = "False:addDisposable:ammountNegative";                      // Show Error Message
                         return View();
                     }
                 }
-                catch(Exception e)                                                  // Exception HIT while parsing/splitting
+                catch (Exception e)                                                  // Exception HIT while parsing/splitting
                 {
                     quantity = 0;                                                   // Zero out quantity
-                    ViewBag.message = "False:addDisposable:failedParseQuantity:"+e; // Message to reflect parse failed
+                    ViewBag.message = "False:addDisposable:failedParseQuantity:" + e; // Message to reflect parse failed
                     return View();
                 }
                 if (quantity < 0)                                               // Does same negative check as for ammount
@@ -150,16 +162,36 @@ namespace DatabaseConn.Controllers
                     return View();
                 }
                 // Updates the Qunatity in the DB
-                string retUp = query("Update [inventory].[dbo].[Disposable] set Quantity = " + quantity + " where UPC = "+UPC+";");
+                string retUp = query("Update [inventory].[dbo].[Disposable] set Quantity = " + quantity + " where UPC = '" + UPC + "';");
                 if (retUp.Contains("False")) // If the return was false, then it will throw an error
                     ViewBag.message = "False:addDisposable:UpdateFailed";
                 else
                     ViewBag.message = "True:addDisposable:UpdatedQuantity";
             }
+
+            // This Section will add a PO Number to the Item in question
+            if (!String.IsNullOrEmpty(PON))      // If the PO Number is empty, skip it.  There is no need to run the PO update logic.
+            {
+                string poRet = query("UPDATE [Inventory].[dbo].[Disposable] SET PO_number = " + PON + " WHERE UPC = '" + UPC + "';");
+                if (!poRet.Contains("False:"))
+                    ViewBag.message += ",True:addPOtoDisposable";
+                else
+                    ViewBag.message += ",False:addPOtoDisposable";
+            }
+
+            // This Section will add a vendor to the item in question
+            if (!String.IsNullOrEmpty(vend))      // If Vendor is empty, skip over it. There is no need to run the vendor update logic
+            {
+                string vendRet = query("UPDATE [Inventory].[dbo].[Disposable] SET vendor = '" + vend + "' WHERE UPC = '" + UPC + "';");
+                if (!vendRet.Contains("False:"))
+                    ViewBag.message += ",True:addVendorToDisposable";
+                else
+                    ViewBag.message += ",False:adddVendorToDisposable";
+            }
             return View();
         }
-        
-        
+
+
 
 
         /**************************************************************
@@ -174,7 +206,7 @@ namespace DatabaseConn.Controllers
             string serial = Request.Form["serial_number"];
             string decal = Request.Form["decal"];
 
-            if(String.IsNullOrEmpty(serial) && String.IsNullOrEmpty(decal))
+            if (String.IsNullOrEmpty(serial) && String.IsNullOrEmpty(decal))
             {
                 ViewBag.message = "False:removeItem:noSerialNorDecalGiven";
                 return View();
@@ -182,21 +214,24 @@ namespace DatabaseConn.Controllers
 
             string existanceCheck = "";
             if (!String.IsNullOrEmpty(serial))      // If the Serial Number is Valid
-            {   
+            {
                 // Check to see if the item is in the database via the serial number
                 existanceCheck = query("SELECT * FROM [Inventory].[dbo].[Item] WHERE serial_number = '" + serial + "';");
                 if (!String.IsNullOrEmpty(existanceCheck))              // If the query that checked the DB returned something...
-                {   
+                {
                     // Delete the item (by serial number) from the database
                     string ret = query("DELETE FROM [Inventory].[dbo].[Item]  WHERE serial_number = '" + serial + "';");
-                    if (String.IsNullOrEmpty(ret))
+                    if (!ret.Contains("False:"))
                         ViewBag.message = "True:removeItem:serialPath";                // Return if the Query did not have an error returned
                     else
-                        ViewBag.messsage = "False:removeItem:FailedRemove:serialPath";  // If the Delete Query returned an error.
+                        ViewBag.message = "False:removeItem:FailedRemove:serialPath";  // If the Delete Query returned an error.
+                    return View();
                 }
                 else                                                    // If the query that checked the DB did not return anything
+                {
                     ViewBag.message = "False:removeItem:NoItemInDatabase:serialPath";   // Print this error message
-                return View();
+                    return View();
+                }
             }
             else if (!String.IsNullOrEmpty(decal))      // Same as above, but using Decal in the WHERE clause
             {
@@ -204,10 +239,10 @@ namespace DatabaseConn.Controllers
                 if (!String.IsNullOrEmpty(existanceCheck))
                 {
                     string ret = query("DELETE FROM [Inventory].[dbo].[Item]  WHERE decal = '" + decal + "';");
-                    if (String.IsNullOrEmpty(ret))
+                    if (!ret.Contains("False:"))
                         ViewBag.message = "True:removeItem:decalPath";
                     else
-                        ViewBag.messsage = "False:removeItem:FailedRemove:decalPath";
+                        ViewBag.message = "False:removeItem:FailedRemove:decalPath";
                 }
                 else
                     ViewBag.message = "False:removeItem:NoItemInDatabase:decalPath";
@@ -219,6 +254,7 @@ namespace DatabaseConn.Controllers
 
         public ActionResult addItem()
         {
+            // Grabs the Post Information from the User's Request
             string UPC = Request.Form["UPC"];
             string serial = Request.Form["serial_number"];
             string model = Request.Form["model_number"];
@@ -226,68 +262,131 @@ namespace DatabaseConn.Controllers
             string bId = Request.Form["building_ID"];
             string descript = Request.Form["description"];
             string PON = Request.Form["PO_number"];
-            string checkedO = Request.Form["checked_out"];
-            string checkedI = Request.Form["checked_in"];
             string PID = Request.Form["person_ID"];
             string vend = Request.Form["vendor"];
             string decal = Request.Form["decal"];
 
-            ViewBag.param = ""+UPC +" | "+serial+" | "+model+" | "+manufacture+
-                " | "+bId+" | "+descript+" | "+PON+" | "+checkedO+" | "+checkedI+" | "+PID+" | "+vend+" | "+decal+" | ";
 
-            string existance = query("SELECT serial_number FROM [Inventory].[dbo].[Item] WHERE serial_number = " + serial + ";");
-            ViewBag.exist = existance;
-            if (existance.Equals("") == false)
+
+            // Shows all params for debugging 
+            ViewBag.param = "" + UPC + " | " + serial + " | " + model + " | " + manufacture +
+                " | " + bId + " | " + descript + " | " + PON + " | " + PID + " | " + vend + " | " + decal + " | ";
+            if (String.IsNullOrEmpty(serial))
             {
-                ViewBag.message = "False:addItem:AlreadyExists"; 
+                ViewBag.message = "False:AddItem:NoSerialGiven";
                 return View();
             }
-            else if (!UPC.Equals("") && !serial.Equals("") && !descript.Equals("") && !model.Equals("") && !manufacture.Equals(""))
-            {
-                
-                String ret = query("INSERT INTO [Inventory].[dbo].[Item]" +
-                    "(UPC,serial_number,description,building_ID,received_date,model_number,manufacturer,surplus_date,PO_number,checked_out" +
-                    " ,checked_in,person_ID) values" +
-                    "(" + UPC + ",'" + serial + "','" + descript + "','J','" + getDate() + "','" + model + "','" + manufacture + "',NULL,NULL,NULL,NULL,NULL);");
+            // Tries to see if the given Decal is in the databse or serial is in the database
+            string existance = query("SELECT serial_number FROM [Inventory].[dbo].[Item] WHERE serial_number = '" + serial + "';");
+            string dexist = query("SELECT decal FROM [Inventory].[dbo].[Item] WHERE decal = '" + decal + "';");
 
-                if (ret.Contains("False") || ret.Equals(""))
-                    ViewBag.message = "False:addItemFull";
-                else
-                    ViewBag.message = "True:addItemFull";
+            if (!String.IsNullOrEmpty(existance) || !String.IsNullOrEmpty(dexist))
+            {
+                ViewBag.message = "False:addItem:AlreadyExists:" + existance + ":" + dexist;
+                return View();
             }
-            else if (!UPC.Equals("") && !serial.Equals("") && !descript.Equals(""))
-            {
-                String ret = "";
-                ret +=query("INSERT INTO [Inventory].[dbo].[Item]" +
-                     "(UPC,serial_number,description,building_ID,received_date,model_number,manufacturer,surplus_date,PO_number,checked_out" +
-                     ",checked_in,person_ID) values" +
-                     "(" + UPC + ",'" + serial + "','" + descript + "','J','" + getDate() + "',NULL,NULL,NULL,NULL,NULL,NULL,NULL);"
-                     );
+            string insertString = "(";
+            string valueString = "(";
 
-                if (ret.Contains("False") || ret.Equals(""))
-                    ViewBag.message = "False:addItem";
+            if (!String.IsNullOrEmpty(UPC))
+            {
+                insertString += "UPC";
+                valueString += "'" + UPC + "'";
+            }
+            if (!String.IsNullOrEmpty(serial))
+            {
+                insertString += ",serial_number";
+                valueString += ",'" + serial + "'";
+            }
+            if (!String.IsNullOrEmpty(decal))
+            {
+                insertString += ",decal";
+                valueString += ",'" + decal + "'";
+            }
+            if (!String.IsNullOrEmpty(model))
+            {
+                insertString += ",model_number";
+                valueString += ",'" + model + "'";
+            }
+            if (!String.IsNullOrEmpty(manufacture))
+            {
+                insertString += ",manufacturer";
+                valueString += ",'" + manufacture + "'";
+            }
+            if (!String.IsNullOrEmpty(bId))
+            {
+                insertString += ",building_ID";
+                valueString += ",'" + bId + "'";
+            }
+            if (!String.IsNullOrEmpty(descript))
+            {
+                insertString += ",description";
+                valueString += ",'" + descript + "'";
+            }
+            if (!String.IsNullOrEmpty(PON))
+            {
+                insertString += ",PO_number";
+                valueString += "," + PON;
+            }
+            if (!String.IsNullOrEmpty(PID))
+            {
+                insertString += ",person_ID";
+                valueString += "," + PID;
+            }
+            if (!String.IsNullOrEmpty(vend))
+            {
+                insertString += ",vendor";
+                valueString += ",'" + vend + "'";
+            }
+
+            // Makes sure that a UPC is present, as well as serial and/or decal, and a description
+            if (!String.IsNullOrEmpty(UPC) && (!String.IsNullOrEmpty(serial) || !String.IsNullOrEmpty(decal)) && !String.IsNullOrEmpty(descript))
+            {
+                string qstrin = "INSERT INTO [Inventory].[dbo].[Item] " + insertString +
+                    ") values " + valueString + ");";
+                string testStrin = "INSERT INTO [Inventory].[dbo].[Item] (UPC,serial_number,description) values ('6753','9242','Test1');";
+                String ret = query(qstrin);
+                Console.WriteLine(valueString);
+                // Return strings to say if the inseration into the db was a pass or fail
+                if (ret.Contains("False") || String.IsNullOrEmpty(ret))
+                    ViewBag.message = "False:addItem:" + testStrin + " : " + qstrin + ": " + ret;
                 else
                     ViewBag.message = "True:addItem";
             }
-            else
-                ViewBag.message = "False:UnableToAdd";
-
-            if (PON.Equals(""))
+            else    // If there is not enough parameters, a message is given back
+            {
+                ViewBag.message = "False:AddItem:NotEnoughParams";
                 return View();
+            }
 
-            string poExist = query("SELECT * FROM [Inventory].[dbo].[PO] WHERE PO_number = "+PON+";");
-           if(!poExist.Equals(""))
+            // This block will pick between vendor and decal depending on which one is valid. 
+            String tokenPhrase = "serial_number";
+            if (String.IsNullOrEmpty(serial))
             {
-                string ret = query("UPDATE [Inventory].[dbo].[Item] SET PO_number = " + PON + " WHERE serial_number = '" + serial + "';");
+                serial = decal;
+                tokenPhrase = "decal";
             }
-            else
+
+            // This Section will add a PO Number to the Item in question
+            if (!String.IsNullOrEmpty(PON))      // If the PO Number is empty, skip it.  There is no need to run the PO update logic.
             {
-                string poRet = query("INSERT INTO [Inventory].[dbo].[PO] VALUES (" + PON + ",'" + vend + "','" + decal + "');");
-                if (poRet.Contains("False:"))
-                    ViewBag.message = "False:addPOtoItem";
+                string poRet = query("UPDATE [Inventory].[dbo].[Item] SET PO_number = " + PON + " WHERE " + tokenPhrase + " = '" + serial + "';");
+                if (!poRet.Contains("False:"))
+                    ViewBag.message += ",True:addPOtoItem";
                 else
-                    ViewBag.message = "True:addPOtoItem";
+                    ViewBag.message += ",False:addPOtoItem";
             }
+
+            // This Section will add a vendor to the item in question
+            if (!String.IsNullOrEmpty(vend))      // If Vendor is empty, skip over it. There is no need to run the vendor update logic
+            {
+                string vendRet = query("UPDATE [Inventory].[dbo].[Item] SET vendor = '" + vend + "' WHERE " + tokenPhrase + " = '" + serial + "';");
+                if (!vendRet.Contains("False:"))
+                    ViewBag.message += ",True:addVendorToItem";
+                else
+                    ViewBag.message += ",False:adddVendorToItem";
+            }
+
             return View();
         }
 
@@ -298,12 +397,12 @@ namespace DatabaseConn.Controllers
             string decal = Request.Form["decal"];
 
             // Makes sure that at decal XOR serial number are vaild.  (one or the other, not  both)
-            if(String.IsNullOrEmpty(decal) && String.IsNullOrEmpty(serial))
+            if (String.IsNullOrEmpty(decal) && String.IsNullOrEmpty(serial))
             {
                 ViewBag.message = "False:viewItem:noSerialOrDecalGiven";
                 return View();
             }
-            else if(!String.IsNullOrEmpty(decal) && !String.IsNullOrEmpty(serial))
+            else if (!String.IsNullOrEmpty(decal) && !String.IsNullOrEmpty(serial))
             {
                 ViewBag.message = "False:viewItem:bothSerialAndDecalGiven";
                 return View();
@@ -311,9 +410,9 @@ namespace DatabaseConn.Controllers
 
             // Hit the database with a select using first the Serial and then the Decal.
             // One or the other method should hopefully return something to the method that can then be used
-            string existance = query("SELECT serial_number,description,person_ID,decal FROM [Inventory].[dbo].[Item] WHERE serial_number = '" + serial + "';");
-            string dExist = query("SELECT serial_number,description,person_ID,decal FROM [Inventory].[dbo].[Item] WHERE decal = '" + decal + "';");
-           
+            string existance = query("SELECT * FROM [Inventory].[dbo].[Item] WHERE serial_number = '" + serial + "';");
+            string dExist = query("SELECT * FROM [Inventory].[dbo].[Item] WHERE decal = '" + decal + "';");
+
             if (existance.Equals(""))
             {
                 if (dExist.Equals(""))
@@ -325,17 +424,38 @@ namespace DatabaseConn.Controllers
                     existance = dExist;
             }
 
+            String[] parts = existance.Split('|');              // Parses the Existance string apart to get the data
+            for (int i = 0; i < parts.Length; i++)              // Goes through the data that was returned
+                if (parts[i].Trim().Equals(""))                 // If it is empty 
+                    parts[i] = "NULL";                          // replace with NULL
+                else
+                    parts[i] = parts[i].Trim();                 // Otherwise trim it
+
+
             // Will construct a JSON Return string
-            String[] parts = existance.Split('|');
-            ViewBag.message = "serial_number:" + parts[0];      // Grabs the Serial Number
-            ViewBag.message += ",description:" + parts[1];      // Grabs the Description(name of) the item
-            ViewBag.message += ",decal_ID:" + parts[3];          // Grabs the Decal Number
-            if (!String.IsNullOrEmpty(parts[2].Trim()))         // Checks if the Item was checked out, 
+            ViewBag.message = "UPC:" + parts[0];
+            ViewBag.message += ",serial_number:" + parts[1];
+            ViewBag.message += ",model_number:" + parts[2];
+            ViewBag.message += ",manufacturer:" + parts[3];
+            ViewBag.message += ",building_ID:" + parts[4];
+            ViewBag.message += ",surplus_date:" + parts[5];
+            ViewBag.message += ",received_date:" + parts[6];
+            ViewBag.message += ",description:" + parts[7];
+            ViewBag.message += ",PO_number:" + parts[8];
+            ViewBag.message += ",checked_out:" + parts[9];
+            ViewBag.message += ",checked_in:" + parts[10];
+            ViewBag.message += ",decal:" + parts[12];
+            ViewBag.message += ",vendor:" + parts[13];
+            if (!String.IsNullOrEmpty(parts[11].Trim()))                 // Checks if the Item was checked out, 
             {
-                ViewBag.message += ",person_ID:" + parts[2];    // Adds the PID to the JSON return
-                string peopleFind = query("SELECT name FROM [Inventory].[dbo].[Person] WHERE person_ID = '" + parts[2] + "';");
-                parts = peopleFind.Split('|');                  // Above query gets the name associated with the person id
-                ViewBag.message += ",person_name:" + parts[0];   // this adds the name to the JSON return
+                ViewBag.message += ",person_ID:" + parts[11].Trim();     // Adds the PID to the JSON return
+                string peopleFind = query("SELECT name FROM [Inventory].[dbo].[Person] WHERE person_ID = '" + parts[11].Trim() + "';");
+                parts = peopleFind.Split('|');                          // Above query gets the name associated with the person id
+                ViewBag.message += ",person_name:" + parts[0].Trim();   // this adds the name to the JSON return
+            }
+            else
+            {
+                ViewBag.message += ",person_ID:NULL,person_name:NULL";  // If not checked out, return this
             }
             return View();
         }
@@ -362,6 +482,12 @@ namespace DatabaseConn.Controllers
                 return View();
             }
             String[] parts = existance.Split('|');          // Splits the results based on the | Delimeter
+            for (int i = 0; i < parts.Length; i++)
+                if (parts[i].Trim().Equals(""))
+                    parts[i] = "NULL";
+                else
+                    parts[i] = parts[i].Trim();
+
             string data = "";
             for (int i = 0; i < parts.Length - 2; i += 3)       // Runs through all sets of data returned
             {
@@ -385,7 +511,7 @@ namespace DatabaseConn.Controllers
             string PID = "";
 
             if (!String.IsNullOrEmpty(decal) && !String.IsNullOrEmpty(serial))      // If both serial and decal are given
-            {  
+            {
                 ViewBag.message = "False:checkIn:BothDecalAndSerialGiven";      // Error, do not take time to figure out if the decal
                 return View();                                          // and serial are for the samee item.
             }
@@ -394,40 +520,32 @@ namespace DatabaseConn.Controllers
                 ViewBag.message = "False:checkIn:NoDecalorSerialGiven";         // Give errors to the user telling them they 
                 return View();                                          // need one or the other
             }
-
-
-            if (!String.IsNullOrEmpty(decal))       // If the Decal Is not null or Empty
+            string exist = query("SELECT * FROM [Inventory].[dbo].[Item] WHERE serial_number = '" + serial + "';");
+            string dexist = query("SELECT * FROM [Inventory].[dbo].[Item] WHERE decal = '" + decal + "';");
+            if (String.IsNullOrEmpty(exist) && String.IsNullOrEmpty(dexist))
             {
-                // Query the database to see an item with the given decal exists in the DB
-                PID = query("select person_ID from [Inventory].[dbo].[Item] where decal = " + decal + ";");
-                if (String.IsNullOrEmpty(PID))  // if the Person ID for the given decal was not found in the database, 
-                {
-                    ViewBag.message = "False:checkIn:NotFoundInDB";     // Return an error stating false not found in DB 
-                    return View();
-                }
-                // Null out the person ID that was attached to the given item.  It also time stamps the checked in date.
-                string updates = query("Update [inventory].[dbo].[Item] set person_ID =  NULL,checked_in = '" 
-                    + getDate() + "' where decal = " + decal + ";");
-                if ((updates).Contains("False"))                        // If the query returned false (an error)
-                    ViewBag.message = "False:checkIn:ItemNotCheckedOut";    
-                else
-                    ViewBag.message = "True:checkIn:ItemCheckedIn:" + getDate();// Return a message that the check in was successful
+                ViewBag.message = "False:checkIn:ItemDoesnotExistinDB";
+                return View();
             }
-            else        // Does the exact same as above, but for serial numbers
-            {
-                PID = query("select person_ID from [Inventory].[dbo].[Item] where serial_number = " + serial + ";");
-                if (String.IsNullOrEmpty(PID))
-                {
-                    ViewBag.message = "False:checkIn:NotFoundInDB";
-                    return View();
-                }
-                string updates = query("Update [inventory].[dbo].[Item] set person_ID =  NULL,checked_in = '" + getDate() + "' where serial_number = " + serial + ";");
+            string whereClause = "where decal = '" + decal + "';";
+            if (String.IsNullOrEmpty(decal))
+                whereClause = "where serial_number = '" + serial + "';";
 
-                if ((updates).Contains("False"))
-                    ViewBag.message = "False:checkIn:ItemNotCheckedOut";
-                else
-                    ViewBag.message = "True:checkIn:ItemCheckedIn:" + getDate();
+            // Query the database to see an item with the given decal exists in the DB
+            PID = query("select person_ID from [Inventory].[dbo].[Item] " + whereClause);
+            if (String.IsNullOrEmpty(PID) || PID.Contains("False:") || PID.Trim().Equals("|"))  // if the Person ID for the given decal was not found in the database, 
+            {
+                ViewBag.message = "False:checkIn:NotCheckedOut";     // Return an error stating false not found in DB 
+                return View();
             }
+            // Null out the person ID that was attached to the given item.  It also time stamps the checked in date.
+            string updates = query("Update [inventory].[dbo].[Item] set person_ID =  NULL,checked_in = '"
+                + getDate() + "' " + whereClause);
+            if ((updates).Contains("False:"))                        // If the query returned false (an error)
+                ViewBag.message = "False:checkIn:ItemNotCheckedOut";
+            else
+                ViewBag.message = "True:checkIn:ItemCheckedIn:" + getDate();// Return a message that the check in was successful
+
             return View();
         }
         public ActionResult checkOut()
@@ -435,106 +553,93 @@ namespace DatabaseConn.Controllers
             // Post Requests
             string serial = Request.Form["serial_number"];
             string decal = Request.Form["decal"];
-            string personId = Request.Form["person_ID"];    
+            string personId = Request.Form["person_ID"];
             string personName = Request.Form["person_name"];// It is name in the database, but that seems like it could cuase problems elsewhere
             string buildingId = Request.Form["building_ID"];// Building/room where the item is going to now be located
 
-            if(!String.IsNullOrEmpty(serial) && !String.IsNullOrEmpty(decal))     // Make sure that serial XOR decal is defined.  Not both
+            if (!String.IsNullOrEmpty(serial) && !String.IsNullOrEmpty(decal))     // Make sure that serial XOR decal is defined.  Not both
             {
-                ViewBag.message = "False:checkOut:serialAndDecalDefined";
+                ViewBag.message = "False:checkOut:CantHaveBothserialAndDecal";
                 return View();
             }
 
+            if (String.IsNullOrEmpty(serial) && String.IsNullOrEmpty(decal))
+            {
+                ViewBag.message = "False:checkOut:MustSpecifySerialOrDecal";
+                return View();
+            }
 
-            
-            string existance ="", dExist = "";
-            if(!String.IsNullOrEmpty(serial))   // If the Serial Number is valid, select serial, person_id, decal, and building ID from the item table
+            string existance = "", dExist = "";
+            if (!String.IsNullOrEmpty(serial))   // If the Serial Number is valid, select serial, person_id, decal, and building ID from the item table
                 existance = query("SELECT serial_number,person_ID,decal,building_ID FROM [Inventory].[dbo].[Item] WHERE serial_number = " + serial + ";");
             else                                // Do the same, but Decal is now the where value
                 dExist = query("SELECT serial_number,person_ID,decal,building_ID FROM [Inventory].[dbo].[Item] WHERE decal = '" + decal + "';");
 
             // This block checks if the Item was not found with either the Decal or Serial number
-            if (existance.Equals("") && dExist.Equals(""))  // If it was not found, the following error is returned
+            if (String.IsNullOrEmpty(existance) && String.IsNullOrEmpty(dExist))  // If it was not found, the following error is returned
             {
                 ViewBag.message = "False:checkOut:NotFoundInDB";
                 return View();
             }
 
-
-            // It can also retrieve an ID based on names.
-            if(personId.Equals(""))
-            {  
-                string pinExist = query("SELECT person_ID,name FROM [Inventory].[dbo].[Person] WHERE name = '" + personName + "';");
-                if (pinExist.Equals(""))
-                {
-
-                    ViewBag.message = "False:checkOut:NoPersonSpeciified";
-                    return View();
-                }
-                else
-                {
-                    // Gets the correct PID from the database based on the name you entered
-                    string[] parts = pinExist.Split('|');
-                    personId = parts[0];
-                }
+            // This checks to make sure a person ID or Name is given
+            if (String.IsNullOrEmpty(personName) && String.IsNullOrEmpty(personId))
+            {
+                ViewBag.message = "False:checkOut:NoPersonIdOrNameGiven";
+                return View();
             }
 
-            /**********************************************************************
-             * At this point the person ID should have a value.  Whether it be 
-             * from searching a name in the previous block, or if it is from user input.
-             * If it is from the above block, it should be valid and thus
-             * Skip the next block.   
-             **********************************************************************/
+            // Check to see if the PID  given is in the database
             string pidExist = query("SELECT person_ID,name FROM [Inventory].[dbo].[Person] WHERE person_ID = '" + personId + "';");
 
-            // If the PID did not exist in the database for People(person)
-            // Then essentailly repeat the code block above.
-            if(pidExist.Equals(""))
+            if (String.IsNullOrEmpty(pidExist))  // If the ID was not found in the DB or was null/empty
             {
-                // If the ID was not in the database, check to see if the name was as well   
-                string pinExist = query("SELECT person_ID,name FROM [Inventory].[dbo].[Person] WHERE name = '" + personName + "';");
+                // Check to see if the Person Name given is valid/in the DB
+                string pnameExist = query("SELECT person_ID,name FROM [Inventory].[dbo].[Person] WHERE name = '" + personName + "';");
 
-                if (pinExist.Equals("")) // If the name was not in the database either, 
+                if (String.IsNullOrEmpty(pnameExist))    // If the name was not found in the database AND the Id was Not Found
                 {
-                    // Insert into databse that person
-                    string insertResult = query("INSERT INTO [Inventory].[dbo].[Person] (person_ID,name) VALUES (" + personId + ", '" + personName + "');");
+                    // If both fields have data in them, add that person to the Database
+                    if (!String.IsNullOrEmpty(personId) && !String.IsNullOrEmpty(personName))
+                    {
+                        // Inser the Person Id and Name into the DB
+                        string insertResult = query("INSERT INTO [Inventory].[dbo].[Person] (person_ID,name) VALUES (" + personId + ", '" + personName + "');");
+                        if (insertResult.Contains("False:"))
+                        {
+                            ViewBag.message = "False:checkOut:FailedToAddPersonToDB";
+                            return View();
+                        }
+                    }
+                    else    // Otherwise throw an error message
+                    {
+                        ViewBag.message = "False:checkOut:NoSuchPersonFoundInDB";
+                        return View();
+                    }
                 }
-                else // I feel this is redundant code but I cant prove it
+                else // The Person Name was found in the Database
                 {
-                    // Gets the correct PID from the database based on the name you entered
-                    string[] parts = pidExist.Split('|');
+                    string[] parts = pnameExist.Split('|');
                     personId = parts[0];
                 }
-
             }
 
-            // If the person name is still not valid (was not retrieved durring an ID lookup
-            // Nor was it user defined
-            if(personName.Equals(""))
-            {
-                string[] parts = pidExist.Split('|');       // Splits up the PID return
-                personName = parts[1];                      // Uses the name section of it to assign Person Name
-            }
+
+
+
+
+
+
 
             // this block checks if the Building ID was not specified in the post request.
-            if(buildingId.Equals(""))
+            if (String.IsNullOrEmpty(buildingId))
             {
-                if (!existance.Equals(""))                  // If serial exists in DB
-                {
-                    string[] parts = existance.Split('|');  // Split apart the original Item existance check
-                    buildingId = parts[3];                  // Set the new Building ID to be the old Building ID
-                }
-                else if (!dExist.Equals(""))                // If decal existed in DB
-                {
-                    string[] parts = dExist.Split('|');
-                    buildingId = parts[3];                  // Set the new Building ID to be the old Building ID
-                }
+                ViewBag.message = "False:checkOut:DidnotSpecifyLocation";
+                return View();
             }
-
 
             // A valid Serial Number or Decal is present.
             // A Valid PID is also present at this point.
-            string result = "False:checkOut:UnknowError";
+            string result = "False:checkOut:UnknowError";   // Assume the code will fail
 
 
             /*********************************************************************
@@ -542,18 +647,55 @@ namespace DatabaseConn.Controllers
              * It will use Decal or Serial depending to sset the Person Id, 
              * Building Id, and date checked out
              *********************************************************************/
-            if (!existance.Equals(""))
-                result = query("UPDATE [Inventory].[dbo].[Item] SET person_ID = '"+personId+"',building_ID = '"+buildingId+"',[checked_out] = '"+getDate()+"' WHERE serial_number = '" + serial + "';");
-            else if (!dExist.Equals(""))
-                result = query("UPDATE [Inventory].[dbo].[Item] SET person_ID = '"+personId+"',building_ID = '"+buildingId+"',[checked_out] = '"+getDate()+"' WHERE decal = '"+decal+"';");
+            if (!String.IsNullOrEmpty(existance))
+                result = query("UPDATE [Inventory].[dbo].[Item] SET person_ID = '" + personId + "',building_ID = '" + buildingId + "',[checked_out] = '" + getDate() + "' WHERE serial_number = '" + serial + "';");
+            else if (!String.IsNullOrEmpty(dExist))
+                result = query("UPDATE [Inventory].[dbo].[Item] SET person_ID = '" + personId + "',building_ID = '" + buildingId + "',[checked_out] = '" + getDate() + "' WHERE decal = '" + decal + "';");
 
-            if (!result.Contains("False"))  // If the Result does not have False in it (IE Query did not return a false)
+            if (!result.Contains("False:"))  // If the Result does not have False in it (IE Query did not return a false)
                 ViewBag.message = "True:checkOut:ItemCheckedOutSuccess:" + getDate();
             else
-                ViewBag.messsaage = "False:checkOut:CheckOutFailed";
+                ViewBag.messaage = "False:checkOut:CheckOutFailed";
             return View();
         }
 
+
+        /*************************************************************
+         * Purchase Order Methods
+         *  - View
+         *************************************************************/
+
+        public ActionResult viewPO()
+        {
+            string PON = Request.Form["PO_number"];
+
+            // Checks the Database to pull all items that have the given Person Id
+            string existance = query("SELECT serial_number,description,decal FROM [Inventory].[dbo].[Item] WHERE PO_number = '" + PON + "';");
+
+            if (String.IsNullOrEmpty(existance))            // If the Query returned nothing, thus no items were checked out to that person
+            {
+                ViewBag.message = "False:viewPerson:PoNumberDoesNotExist"; // Or the PID Doesnt exist
+                return View();
+            }
+            String[] parts = existance.Split('|');          // Splits the results based on the | Delimeter
+            for (int i = 0; i < parts.Length; i++)
+                if (parts[i].Trim().Equals(""))
+                    parts[i] = "NULL";
+                else
+                    parts[i] = parts[i].Trim();
+
+            string data = "";
+            for (int i = 0; i < parts.Length - 2; i += 3)       // Runs through all sets of data returned
+            {
+                if (!String.IsNullOrEmpty(data))
+                    data += ",";
+                data += "serial_number:" + parts[i];
+                data += ",description:" + parts[i + 1];
+                data += ",decal:" + parts[i + 2];
+            }
+            ViewBag.message = data;
+            return View();
+        }
         /*************************************************************
          * Other Methods (Default Page Methods)
          * - Index
@@ -623,12 +765,12 @@ namespace DatabaseConn.Controllers
                             myConnection.Close();
                             return "True:UpdatedCorrectly";
                         }
-                        else if(query.Contains("DELETE FROM"))
+                        else if (query.Contains("DELETE FROM"))
                         {
                             myConnection.Close();
                             return "True:DeletedCorrectly";
                         }
-                         String ret = "";
+                        String ret = "";
                         // Goes through all of the data returned from the Query
                         while (reader.Read())
                         {
@@ -638,7 +780,7 @@ namespace DatabaseConn.Controllers
                                 ret += v[i] + " | ";            // each element of V with a | to a return string
                             ret += "\n";                        // Add an new line for good measure
                         }
-                      
+
                         myConnection.Close();
                         return ret;
                     }
@@ -646,7 +788,7 @@ namespace DatabaseConn.Controllers
             }
             catch (Exception e)
             {
-                return "False:queryfunction";          // Error to print/return if something went wrong in the Query.
+                return "False:queryfunction" + e;          // Error to print/return if something went wrong in the Query.
             }
         }
 
@@ -666,6 +808,7 @@ namespace DatabaseConn.Controllers
             string sqlFormattedDate = myDateTime.ToString("yyyy-MM-dd HH:mm:ss");
             return sqlFormattedDate;
         }
+
         // this is the old and depricated Version of Query that is not very helpful
         public String query(String query, List<String> keys)
         {
